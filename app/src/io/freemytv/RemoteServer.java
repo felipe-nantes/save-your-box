@@ -133,20 +133,18 @@ public class RemoteServer extends Service {
             int q = target.indexOf('?');
             String path = q < 0 ? target : target.substring(0, q);
             String query = q < 0 ? "" : target.substring(q + 1);
+            // The key comes in the QR code's address (?k=), then from the page with each request (X-Key, kept on the
+            // phone) or as a cookie. The page opens straight from the QR code: a phone's camera opens it from another
+            // app, and browsers drop SameSite=Strict cookies across that redirect.
             String key = readKey(this);
-            String given = param(query, "k");
-            if (given != null && method.equals("GET") && path.equals("/")) {
-                if (!same(given, key)) {
-                    reply(out, 403, "text/html; charset=utf-8", denied(), null);
-                    return;
-                }
-                // Remembered on the phone; the address bar loses the key.
-                reply(out, 302, "text/plain", new byte[0], "Location: /\r\nSet-Cookie: fmtv=" + key
-                        + "; Max-Age=31536000; Path=/; HttpOnly; SameSite=Strict\r\n");
+            boolean fromQr = same(param(query, "k"), key);
+            if (!fromQr && !same(headers.get("x-key"), key) && !same(cookie(headers.get("cookie")), key)) {
+                reply(out, 403, "text/html; charset=utf-8", denied(), "Cache-Control: no-store\r\n");
                 return;
             }
-            if (!same(cookie(headers.get("cookie")), key)) {
-                reply(out, 403, "text/html; charset=utf-8", denied(), null);
+            if (fromQr && method.equals("GET") && path.equals("/")) {
+                reply(out, 200, "text/html; charset=utf-8", page(), "Cache-Control: no-store\r\nSet-Cookie: fmtv=" + key
+                        + "; Max-Age=31536000; Path=/; HttpOnly; SameSite=Lax\r\n");
                 return;
             }
             int length = 0;
@@ -352,10 +350,13 @@ public class RemoteServer extends Service {
         return out;
     }
 
+    /** Without the key: the page kept on the phone tries again with it, else asks for the QR code. */
     private static byte[] denied() {
         String text = escape(Ui.tr("Scan the QR code in Free My TV's settings on the TV."));
         return ("<!doctype html><meta name=viewport content='width=device-width'><body style='font:18px system-ui;"
-                + "background:#0b0b0f;color:#eee;padding:32px'>" + text).getBytes(StandardCharsets.UTF_8);
+                + "background:#0b0b0f;color:#eee;padding:32px'><script>try{var k=localStorage.getItem('fmtv');"
+                + "if(k&&location.search.indexOf('k='+k)<0){location.replace('/?k='+encodeURIComponent(k))}}catch(e){}"
+                + "</script>" + text).getBytes(StandardCharsets.UTF_8);
     }
 
     // MARK: - Sleep timer

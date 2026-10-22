@@ -14,7 +14,7 @@
   #dot { width: 10px; height: 10px; border-radius: 50%; background: #30d158; box-shadow: 0 0 10px #30d15888; }
   #dot.off { background: #ff453a; box-shadow: 0 0 10px #ff453a88; }
   button { font: inherit; color: inherit; border: 0; cursor: pointer; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
-  .pad { position: relative; width: min(78vw, 300px); aspect-ratio: 1; margin: 0 auto 22px; border-radius: 50%;
+  .pad { position: relative; width: min(78vw, 300px); height: min(78vw, 300px); margin: 0 auto 22px; border-radius: 50%;
          background: radial-gradient(circle at 50% 35%, #2c2c33, #1a1a1f); box-shadow: inset 0 1px 0 #ffffff14, 0 12px 30px #0008; }
   .pad button { position: absolute; display: grid; place-items: center; background: transparent; }
   .pad .arrow { width: 34%; height: 34%; font-size: 28px; color: #d1d1d6; border-radius: 30%; }
@@ -127,13 +127,24 @@
 (function () {
   var T = document.body.dataset;
   var dot = document.getElementById('dot');
+  // The key from the QR code's address: kept on the phone and sent with every request (cookies alone can be lost).
+  var KEY = '';
+  try {
+    var m = /[?&]k=([A-Za-z0-9]+)/.exec(location.search);
+    if (m) localStorage.setItem('fmtv', m[1]);
+    KEY = localStorage.getItem('fmtv') || (m ? m[1] : '');
+  } catch (e) {
+    var m2 = /[?&]k=([A-Za-z0-9]+)/.exec(location.search);
+    KEY = m2 ? m2[1] : '';
+  }
+  if (location.search && history.replaceState) history.replaceState(null, '', '/');
   function toast(text) {
     var t = document.getElementById('toast');
     t.textContent = text; t.classList.add('show');
     clearTimeout(toast.timer); toast.timer = setTimeout(function () { t.classList.remove('show'); }, 2600);
   }
   function post(path, body, type) {
-    return fetch(path, { method: 'POST', body: body, headers: { 'Content-Type': type || 'text/plain;charset=utf-8' } })
+    return fetch(path, { method: 'POST', body: body, headers: { 'Content-Type': type || 'text/plain;charset=utf-8', 'X-Key': KEY } })
       .then(function (r) { dot.classList.toggle('off', !r.ok); if (!r.ok) throw new Error(r.status); return r; })
       .catch(function (e) { dot.classList.add('off'); toast(T.noreply); throw e; });
   }
@@ -163,7 +174,7 @@
 
   function minutes(n) { return T.turnsoff.replace('#', n); }
   function refresh() {
-    fetch('/state', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (s) {
+    fetch('/state', { cache: 'no-store', headers: { 'X-Key': KEY } }).then(function (r) { return r.json(); }).then(function (s) {
       dot.classList.remove('off');
       var left = Math.ceil(s.timer / 60);
       document.getElementById('timerNote').textContent = s.timer > 0 ? minutes(left) : '';
