@@ -24,6 +24,7 @@ import android.graphics.drawable.Drawable;
 import android.media.tv.TvContract;
 import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
+import android.os.Build;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.view.View;
@@ -824,15 +825,15 @@ final class HomeApps {
         if (icon == null) return b;
         int size = Math.round(TILE_H * 0.56f);
         float left = (TILE_W - size) / 2f, top = (TILE_H - size) / 2f;
-        if (icon instanceof AdaptiveIconDrawable) {
+        Drawable[] layers = Build.VERSION.SDK_INT >= 26 ? Adaptive.layers(icon) : null;
+        if (layers != null) {
             // Adaptive icon: the layers clipped to a squircle, like an Apple icon.
-            AdaptiveIconDrawable a = (AdaptiveIconDrawable) icon;
             Path clip = new Path();
             clip.addRoundRect(new RectF(left, top, left + size, top + size), size * 0.2237f, size * 0.2237f, Path.Direction.CW);
             canvas.save();
             canvas.clipPath(clip);
             int pad = size / 4;
-            for (Drawable layer : new Drawable[] {a.getBackground(), a.getForeground()}) {
+            for (Drawable layer : layers) {
                 if (layer == null) continue;
                 layer.setBounds(Math.round(left) - pad, Math.round(top) - pad, Math.round(left) + size + pad, Math.round(top) + size + pad);
                 layer.draw(canvas);
@@ -936,5 +937,15 @@ final class HomeApps {
         }
         if (bottom < 0) return b;
         return Bitmap.createBitmap(b, left, top, right - left + 1, bottom - top + 1);
+    }
+
+    /** Only this class touches the Android 8 AdaptiveIconDrawable, so HomeApps still verifies on Android 7. */
+    private static final class Adaptive {
+        /** An adaptive icon's background and foreground, or null for any other icon. */
+        static Drawable[] layers(Drawable icon) {
+            if (!(icon instanceof AdaptiveIconDrawable)) return null;
+            AdaptiveIconDrawable a = (AdaptiveIconDrawable) icon;
+            return new Drawable[] {a.getBackground(), a.getForeground()};
+        }
     }
 }

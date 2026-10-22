@@ -194,6 +194,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
     private final Spring heroFocus = new Spring(0.28f, 0.85f, 0);
     private final RectF heroButton = new RectF();
     private Backdrop bgFrom, bgTo;     // null = gradient (no photo)
+    private Backdrop wallpaper;        // your photo (wallpaper= in config.properties), in place of the picks' photos
     private final int[] frostMix = new int[Backdrop.FW * Backdrop.FH];
 
     // Bottom drawer
@@ -409,6 +410,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         checkNotices();
         reload();
         updatePalette();
+        applyWallpaper();
         updatePicks();
         if (sheetOpen) closeSheet();
         sheet.snap(sheet.target);
@@ -818,8 +820,30 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         return true;
     }
 
+    /** Your photo as the background while it's on in Home Settings (built once, off the UI thread), else the picks'. */
+    private void applyWallpaper() {
+        if (!Prefs.wallpaper()) {
+            if (wallpaper == null) return;
+            wallpaper = null;
+            Backdrop.forgetWallpaper();
+            showBackdrop(cards.isEmpty() ? null : recs.backdrop(cards.get(0)));
+            return;
+        }
+        if (wallpaper != null) return;
+        final Context app = getContext().getApplicationContext();
+        LOADER.execute(() -> {
+            final Backdrop w = Backdrop.wallpaper(app);
+            if (w != null) handler.post(() -> {
+                if (!Prefs.wallpaper()) return;
+                wallpaper = w;
+                showBackdrop(w);
+            });
+        });
+    }
+
     /** Swaps the background with a cross-fade (from one image to another, from the gradient to an image, or back). */
     private void showBackdrop(Backdrop b) {
+        if (wallpaper != null) b = wallpaper;
         if (b == bgTo) return;
         long up = SystemClock.uptimeMillis();
         // In the middle of another swap, start from whichever is more visible.

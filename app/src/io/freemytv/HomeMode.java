@@ -3,6 +3,7 @@ package io.freemytv;
 import android.content.Context;
 import android.os.Build;
 import android.os.SystemClock;
+import android.text.TextUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -78,6 +79,18 @@ final class HomeMode {
         // KTC (NextStar; MediaTek)
         "tv.anoki.acr.controller",                                                    // Anoki ACR: watches what's on screen
         "com.mediatek.tv.retaildemo", "com.electronic.manual",                        // store demo, manual
+        // No-name Rockchip boxes ("MXQ Pro", RK322x, Android 7.1)
+        "com.adups.fota",                                                             // Adups updater: no real updates, sent users' data to China (2016)
+        "com.rockchip.devicetest", "com.DeviceTest", "com.example.txczdevicetest",    // factory tests
+        "com.cghs.stresstest",                                                        // factory stress test
+    };
+
+    /** Rockchip RK322x boxes: only there, since these apps are the user's choice on other TVs. */
+    private static final boolean RK_BOX = Build.DEVICE.startsWith("rk322x");
+    private static final String[] RK_BOX_DEBLOAT = {
+        "com.google.android.marvin.talkback",                                         // TalkBack, running though off
+        "com.android.inputmethod.pinyin",                                             // Chinese keyboard (the Latin one types)
+        "com.android.wallpaper.livepicker",                                           // live wallpapers
     };
 
     /** The voice assistant, only with disable_assistant=true in config.properties (the mic button stops working). */
@@ -135,7 +148,12 @@ final class HomeMode {
         "com.fengmi.projector.imaging", "com.fengmi.platform", "com.fengmi.Autopair", "com.fengmi.fmsettings",
         "com.fengmi.testsuite", "android.autoinstalls.config.fomovie",
         "uk.co.freeview.tifbridge",
-        "uk.co.freeview.mdsclient", "uk.co.freeview.fvpconfigauth"));
+        "uk.co.freeview.mdsclient", "uk.co.freeview.fvpconfigauth",
+        // Android 7 to 9: Chrome is the system's WebView (webview_provider), every app's web pages and sign-ins
+        "com.android.chrome",
+        // Rockchip boxes: front panel clock, updates from USB, screen mirroring, file manager, USB media player
+        "com.example.changeled", "android.rockchip.update.service", "com.rockchip.wfd", "com.android.rockchip",
+        "com.rockchips.mediacenter"));
 
     /** One switch at a time (jobs can overlap: a boot check and a button press). */
     private static final Object RUN = new Object();
@@ -209,7 +227,7 @@ final class HomeMode {
             list.add(REMOTE_SERVICE);
         }
         adb.shell(list.isEmpty() ? "settings delete secure enabled_accessibility_services"
-                : "settings put secure enabled_accessibility_services '" + String.join(":", list) + "'");
+                : "settings put secure enabled_accessibility_services '" + TextUtils.join(":", list) + "'");
         if (on) adb.shell("settings put secure accessibility_enabled 1");
         else if (list.isEmpty() && state(c).optBoolean("accessibilityWasOff")) adb.shell("settings put secure accessibility_enabled 0");
         AppLog.w("remote buttons service " + (on ? "on" : "off"));
@@ -354,7 +372,7 @@ final class HomeMode {
             } else {
                 List<String> problems = new ArrayList<>(failed);
                 if (!homeOk) problems.add(Ui.tr("the original home screen"));
-                notice(c, Ui.trf("Original mode, but I couldn't turn back on: {list}.", "list", String.join(", ", problems)));
+                notice(c, Ui.trf("Original mode, but I couldn't turn back on: {list}.", "list", TextUtils.join(", ", problems)));
             }
             busy(c, Ui.tr("Measuring the original home screen…"));
             measureHomeTime(c, adb, ORIGINAL);
@@ -509,8 +527,8 @@ final class HomeMode {
                 return;
             }
             if (!fixed.isEmpty()) {
-                notice(app, updated ? Ui.trf("The TV update turned back on {list}.", "list", String.join(", ", fixed))
-                        : Ui.trf("Turned off what was missing: {list}.", "list", String.join(", ", fixed)));
+                notice(app, updated ? Ui.trf("The TV update turned back on {list}.", "list", TextUtils.join(", ", fixed))
+                        : Ui.trf("Turned off what was missing: {list}.", "list", TextUtils.join(", ", fixed)));
             } else if (updated) {
                 notice(app, Ui.tr("The TV was updated; Free My TV is still on."));
             }
@@ -530,6 +548,7 @@ final class HomeMode {
         String dreamPkg = packageOf(dream);
         if (dreamPkg != null && !dreamPkg.equals(PKG) && !dreamPkg.equals(homePkg)) out.add(dreamPkg);
         out.addAll(Arrays.asList(DEBLOAT));
+        if (RK_BOX) out.addAll(Arrays.asList(RK_BOX_DEBLOAT));
         if (Config.DISABLE_ASSISTANT) out.addAll(Arrays.asList(ASSISTANT));
         return out;
     }
@@ -817,7 +836,7 @@ final class HomeMode {
         for (String pkg : sorted(disabled)) if (pkg.matches("[\\w.]+")) list.add(pkg);
         try {
             adb.shell(list.isEmpty() ? "settings delete global " + RECORD
-                    : "settings put global " + RECORD + " " + String.join(",", list));
+                    : "settings put global " + RECORD + " " + TextUtils.join(",", list));
         } catch (IOException e) {
             AppLog.w("could not save the record of what we turned off: " + e.getMessage());
         }

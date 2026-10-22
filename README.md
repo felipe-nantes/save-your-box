@@ -111,6 +111,7 @@ The first values come from `config.properties`, created by the first build (Goog
 | `watchmode_key` | Optional, free [Watchmode](https://api.watchmode.com/) key: a pick opens the title's page in its app | empty |
 | `latitude`, `longitude` | Your city, for the weather and the sunset | New York |
 | `city` | The name on the weather card | `Weather` |
+| `wallpaper` | Your own photo as the background, in place of the picks' photos (a path from the folder, like `../photo.jpg`); Google TV only | empty |
 | `hide_animation` | Leave cartoons and anime out of the picks | `false` |
 | `language` | `auto` (follows the TV), or a language with a [translation](#translations) (`en`, `pt`, `es`, `de`, `ru`, `fr`, `ja`…) on Google TV; `en`, `es`, `pt`, `ru` or `de` on LG and Samsung | `auto` |
 | `show_crypto` | Show Binance crypto prices on home and screensaver | `true` |
@@ -145,6 +146,8 @@ To remove it for good, switch to *Original* first, then uninstall *Free My TV* (
   - on Philco TVs, AI PONT (promo channels and app downloads) and the manual;
   - on Multilaser TVs, Anoki's screen-content recognition (ACR), the store demo and the manual;
   - on KTC-made TVs (NextStar), Anoki's screen-content recognition (ACR), the store demo and the manual;
+  - on no-name Rockchip boxes ("MXQ Pro", Android 7.1), the Adups updater and the factory tests, plus TalkBack, the
+    Chinese keyboard and live wallpapers there;
   - Google Assistant, only with `disable_assistant=true`.
 - On TCL TVs, the remote's Netflix, YouTube and Prime buttons keep working through a small accessibility service that only reads those buttons. Pick what each one opens in *Free My TV* → *Remote Buttons*; *Original* turns the service off. On Vestel-made TVs (F&U and other store brands) and Xiaomi (Formovie) projectors the same goes for the Netflix button, and on KTC-made TVs (NextStar) for the Tabii button. On Sony TVs, the BRAVIA CORE, Netflix, Disney+, Prime Video, YouTube and Crunchyroll buttons (and Google Play, on remotes that have it) can each open the app you pick, or keep Sony's default.
 - Picture, sound, inputs, remote pairing, Google services and the Play Store are on a protected list, checked before every change.

@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -509,7 +510,7 @@ final class Recs {
             }
         }
         if (p.app != null) parts.add(SERVICE_NAME.get(p.app));
-        p.meta = String.join(" · ", parts);
+        p.meta = TextUtils.join(" · ", parts);
         p.detailed = true;
     }
 

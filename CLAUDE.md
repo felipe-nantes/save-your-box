@@ -154,15 +154,33 @@ HDMI (Chromecast with Google TV, Google TV Streamer, onn 4K, NVIDIA Shield). Set
 
 ## The code
 
-- Java 8 language level, minSdk 26 (Android 8), targetSdk 33. No Gradle, no libraries: only the Android SDK.
+- Java 8 language level, minSdk 25 (Android 7.1), targetSdk 33. No Gradle, no libraries: only the Android SDK.
+  Android 7.1 (tested on an RK322x "MXQ Pro" box) has no Typeface.Builder (Inter at its default weight, bold drawn
+  by Android), no hardware bitmaps, no AdaptiveIconDrawable and no String.join (use TextUtils.join); each Android 8
+  call sits in its own nested class (`Ui.Variable`, `Backdrop.Hardware`, `HomeApps.Adaptive`). Installing it there
+  clears the default home screen (no HOME role before Android 10): until the first switch, HOME asks which to use.
+  That box's adbd answers one TCP connection at a time: while the computer is connected, the app's switch fails with
+  "the TV's ADB didn't respond". Run `adb disconnect` before they switch, and connect again after. The same goes
+  right after `adb install -r`: the update's own check (`MY_PACKAGE_REPLACED` → `HomeMode.verify`) runs at once, so
+  disconnect in the same command and wait a minute before connecting again.
+  Such boxes may never run Android's idle compile job (`dumpsys package dexopt` shows `interpret-only` everywhere),
+  so every app starts slowly: `cmd package compile -m speed <pkg>` for Free My TV and the shelf apps, and
+  `-m speed-profile` for big ones (`speed` ran out of memory on Spotify); 7.1 has no `bg-dexopt-job`. An update
+  (`install -r`) drops Free My TV back to `interpret-only`: compile it again. Its font is read once there (`Ui.inter`).
+  Its clock has no battery: after a reboot it starts at 1970 until NTP answers, and its `ntp_server` was empty
+  (set to `a.ntp.br`). Its old time zone data still has Brazil's summer time: São Paulo shows an hour ahead, so pick
+  a UTC−3 zone without it (shell can't set the zone: `SET_TIME_ZONE`). Chrome is its WebView: never turn it off.
+- `wallpaper=` packs their photo as `assets/wallpaper.jpg` (build.sh, from `out/assets`, so it stays out of git);
+  `Backdrop.wallpaper` builds it once per process, sharp, and `HomeView.showBackdrop` uses it instead of the picks'.
   Android 9 and older have no RenderNode (`Recording` wraps it, with a Picture there) and no `cmd role`. On Android 8 to 11
   (`Ui.LEGACY`) the home screen skips the GPU layers, draws blurred shadows from cached bitmaps (`Shadows`) and
   rounds images with a shader instead of clipPath: their GPUs (a Mi Box 3's Mali-450) choked on those.
   Android 11 runs the screensaver as `ScreensaverAlone`, in the main process (its DreamActivity needs the dream in the
   app's default process, without a home activity); `res/values-v30/bools.xml` picks it, every other version keeps
   `Screensaver` in `:home`. Keep both in step.
-  To check for newer APIs, compile against `platforms/android-26/android.jar`: only AGSL (`RuntimeShader`, guarded
-  by a try/catch), `BitmapShader.setFilterMode` (guarded), `Recording.Node` and `Ui.Weighted` (the Android 9 font weight) should come up.
+  To check for newer APIs, compile against `platforms/android-25/android.jar`: only AGSL (`RuntimeShader`, guarded
+  by a try/catch), `BitmapShader.setFilterMode` (guarded), `Recording.Node`, `Ui.Weighted` (the Android 9 font weight)
+  and the Android 8 nested classes above should come up.
 - The home screen is drawn by hand on one Canvas (`HomeView`); the glass and the sky are AGSL shaders (`Shaders`,
   Android 13+, with a fallback for 8 to 12). Keep it at 60 fps: no allocations in `onDraw`, no work on the UI thread.
 - Some TVs draw their UI at 1280×720 on a 1080p panel (TCL's 1 GB models: `ro.surface_flinger.max_graphics_width`

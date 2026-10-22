@@ -6,6 +6,7 @@ import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Shader;
+import android.os.Build;
 
 /**
  * The home screen background made from the recommendation's image, built once in the background:
@@ -49,6 +50,13 @@ final class Backdrop {
 
     private Backdrop(Bitmap image, int[] frost, int[] glass, Bitmap wide, Bitmap tall, int[] light, int[] lightGlass,
                      int[] night, int[] nightGlass) {
+        this(image, frost, glass, wide, tall, light, lightGlass, night, nightGlass,
+                light == null ? null : Bitmap.createBitmap(light, FW, FH, Bitmap.Config.ARGB_8888),
+                night == null ? null : Bitmap.createBitmap(night, FW, FH, Bitmap.Config.ARGB_8888));
+    }
+
+    private Backdrop(Bitmap image, int[] frost, int[] glass, Bitmap wide, Bitmap tall, int[] light, int[] lightGlass,
+                     int[] night, int[] nightGlass, Bitmap lightImage, Bitmap nightImage) {
         this.image = image;
         this.frost = frost;
         this.glass = glass;
@@ -58,9 +66,77 @@ final class Backdrop {
         this.lightGlass = lightGlass;
         this.nightFrost = night;
         this.nightGlass = nightGlass;
-        lightImage = light == null ? null : Bitmap.createBitmap(light, FW, FH, Bitmap.Config.ARGB_8888);
-        nightImage = night == null ? null : Bitmap.createBitmap(night, FW, FH, Bitmap.Config.ARGB_8888);
+        this.lightImage = lightImage;
+        this.nightImage = nightImage;
     }
+
+    private static Backdrop wallpaper;
+    private static boolean wallpaperRead;
+
+    /**
+     * Your photo (wallpaper= in config.properties, packed as assets/wallpaper.jpg) in place of the picks' photos: sharp
+     * on the whole screen, lightened by day and darkened at night so the text stays readable; the glass and the drawer
+     * read its blurred versions, like a pick's. Built once per process; null when the build has no photo.
+     */
+    static synchronized Backdrop wallpaper(android.content.Context c) {
+        if (wallpaperRead) return wallpaper;
+        wallpaperRead = true;
+        Bitmap src;
+        try {
+            android.graphics.BitmapFactory.Options bounds = new android.graphics.BitmapFactory.Options();
+            bounds.inJustDecodeBounds = true;
+            try (java.io.InputStream in = c.getAssets().open(WALLPAPER)) {
+                android.graphics.BitmapFactory.decodeStream(in, null, bounds);
+            }
+            android.graphics.BitmapFactory.Options opts = new android.graphics.BitmapFactory.Options();
+            opts.inSampleSize = 1;    // a phone photo can be 4000 px wide: decoded at no more than twice the screen
+            while (bounds.outWidth / (opts.inSampleSize * 2) >= W && bounds.outHeight / (opts.inSampleSize * 2) >= H) opts.inSampleSize *= 2;
+            try (java.io.InputStream in = c.getAssets().open(WALLPAPER)) {
+                src = android.graphics.BitmapFactory.decodeStream(in, null, opts);
+            }
+        } catch (java.io.IOException e) {
+            return null;    // no photo in this build
+        }
+        if (src == null) return null;
+        Bitmap out = Bitmap.createBitmap(W, H, Bitmap.Config.ARGB_8888);
+        float scale = Math.max((float) W / src.getWidth(), (float) H / src.getHeight());
+        float sw = src.getWidth() * scale, sh = src.getHeight() * scale;
+        new Canvas(out).drawBitmap(src, null, new RectF((W - sw) / 2, (H - sh) / 2, (W + sw) / 2, (H + sh) / 2),
+                new Paint(Paint.FILTER_BITMAP_FLAG | Paint.DITHER_FLAG));
+        src.recycle();
+        int[] px = new int[W * H];
+        out.getPixels(px, 0, W, 0, 0, W, H);
+        int[] frost = reduce(out, FW, FH, 3, 3);
+        int[] glass = reduce(out, GW, GH, 2, 2);
+        out.recycle();
+        Bitmap day = gpu(Bitmap.createBitmap(whiten(px.clone(), 0.5f), W, H, Bitmap.Config.ARGB_8888));
+        Bitmap night = gpu(Bitmap.createBitmap(darken(px, 0.55f), W, H, Bitmap.Config.ARGB_8888));
+        wallpaper = new Backdrop(null, frost, null, null, null, whiten(frost.clone(), 0.82f), whiten(glass.clone(), 0.74f),
+                darken(frost.clone(), 0.76f), darken(glass, 0.56f), day, night);
+        return wallpaper;
+    }
+
+    /** Turned off in Home Settings: the photo's bitmaps can go (built again if it's turned back on). */
+    static synchronized void forgetWallpaper() {
+        wallpaper = null;
+        wallpaperRead = false;
+    }
+
+    private static Boolean hasWallpaper;
+
+    /** Whether this build carries a photo (wallpaper= in config.properties): Home Settings shows its switch. */
+    static synchronized boolean hasWallpaper(android.content.Context c) {
+        if (hasWallpaper == null) {
+            try (java.io.InputStream ignored = c.getAssets().open(WALLPAPER)) {
+                hasWallpaper = true;
+            } catch (java.io.IOException e) {
+                hasWallpaper = false;
+            }
+        }
+        return hasWallpaper;
+    }
+
+    private static final String WALLPAPER = "wallpaper.jpg";
 
     static Backdrop make(Bitmap src, boolean forLight) {
         Bitmap out = Bitmap.createBitmap(W, H, Bitmap.Config.ARGB_8888);
@@ -170,12 +246,19 @@ final class Backdrop {
         return gpu(out);
     }
 
-    /** Copies it to GPU memory (cheap to draw; the process doesn't keep the pixels). */
+    /** Copies it to GPU memory (cheap to draw; the process doesn't keep the pixels). Android 7 has no such bitmaps. */
     static Bitmap gpu(Bitmap b) {
-        Bitmap g = b.copy(Bitmap.Config.HARDWARE, false);
+        Bitmap g = Build.VERSION.SDK_INT >= 26 ? Hardware.copy(b) : null;
         if (g == null) return b;
         b.recycle();
         return g;
+    }
+
+    /** Only this class touches the Android 8 Bitmap.Config.HARDWARE, so Backdrop still verifies on Android 7. */
+    private static final class Hardware {
+        static Bitmap copy(Bitmap b) {
+            return b.copy(Bitmap.Config.HARDWARE, false);
+        }
     }
 
     /** Blends with a near-black (the darkest gray of Apple's dark-mode backgrounds), keeping the photo's tint. */

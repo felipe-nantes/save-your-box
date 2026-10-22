@@ -66,8 +66,9 @@ final class Ui {
     private static Typeface font(AssetManager a, int opticalSize, int weight) {
         if (has(a, FONT)) {
             try {
-                Typeface t = new Typeface.Builder(a, FONT)
-                        .setFontVariationSettings("'opsz' " + opticalSize + ", 'wght' " + weight).build();
+                Typeface t = Build.VERSION.SDK_INT >= 26 ? Variable.create(a, opticalSize, weight)
+                        // Android 7 can't pick a weight in a variable font: Inter's default (regular), bold drawn by Android.
+                        : Typeface.create(inter(a), weight >= 600 ? Typeface.BOLD : Typeface.NORMAL);
                 if (t != null) return t;
             } catch (RuntimeException ignored) {
             }
@@ -81,6 +82,22 @@ final class Ui {
     private static final class Weighted {
         static Typeface create(int weight) {
             return Typeface.create(Typeface.DEFAULT, weight, false);
+        }
+    }
+
+    private static Typeface inter;
+
+    /** Android 7: Inter read once for every weight (each read parses the whole file, slow on a TV box's CPU). */
+    private static Typeface inter(AssetManager a) {
+        if (inter == null) inter = Typeface.createFromAsset(a, FONT);
+        return inter;
+    }
+
+    /** Only this class touches the Android 8 Typeface.Builder, so Ui itself still verifies on Android 7. */
+    private static final class Variable {
+        static Typeface create(AssetManager a, int opticalSize, int weight) {
+            return new Typeface.Builder(a, FONT)
+                    .setFontVariationSettings("'opsz' " + opticalSize + ", 'wght' " + weight).build();
         }
     }
 

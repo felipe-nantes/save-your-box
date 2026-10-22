@@ -119,6 +119,10 @@ final class Prefs {
     static boolean quotes() { return sp().getBoolean("quotes", Config.SHOW_CRYPTO); }
     static void setQuotes(boolean on) { put("quotes", on); }
 
+    /** Your photo as the background (only in a build that has one: wallpaper= in config.properties). */
+    static boolean wallpaper() { return sp().getBoolean("wallpaper", Config.SHOW_WALLPAPER); }
+    static void setWallpaper(boolean on) { put("wallpaper", on); }
+
     static boolean coin(int i) { return sp().getBoolean("coin" + i, true); }
     static void setCoin(int i, boolean on) { put("coin" + i, on); }
 

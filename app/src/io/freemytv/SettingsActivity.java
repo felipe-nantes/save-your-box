@@ -253,7 +253,7 @@ public class SettingsActivity extends Activity {
                 top = LIST_TOP + 20 + row * (CHOICE_H + ROW_GAP);
                 height = CHOICE_H;
             } else {
-                top = LIST_TOP + 20 + row * (LIST_ROW_H + LIST_ROW_GAP);
+                top = LIST_TOP + 20 + row * (LIST_ROW_H + LIST_ROW_GAP) - listShift();
                 height = LIST_ROW_H;
             }
             focusBox.set(LIST_X * k, top * k, LIST_R * k, (top + height) * k);
@@ -632,6 +632,19 @@ public class SettingsActivity extends Activity {
             return "BRL".equalsIgnoreCase(Config.CURRENCY.trim());
         }
 
+        /** The last row, the background photo's switch, in a build that has one (wallpaper=); -1 without. */
+        private int photoRow() {
+            return Backdrop.hasWallpaper(getContext()) ? COIN_ROWS + 3 + (dollar() ? 1 : 0) : -1;
+        }
+
+        /** Home Settings with more rows than fit (the photo's switch): the list moves up while the focus is low. */
+        private float listShift() {
+            if (screen != HOME_SETTINGS) return 0;
+            int rows = settingLabels().length;
+            float over = LIST_TOP + 20 + rows * (LIST_ROW_H + LIST_ROW_GAP) + 36 - 1060;   // the hint's baseline
+            return over > 0 && focus >= rows - 3 ? over : 0;
+        }
+
         private String[] settingLabels() {
             List<String> l = new ArrayList<>();
             l.add(Ui.tr("Language"));
@@ -645,6 +658,7 @@ public class SettingsActivity extends Activity {
             l.add("Ethereum");
             l.add("Solana");
             if (dollar()) l.add(Ui.tr("Dollar"));
+            if (photoRow() >= 0) l.add(Ui.tr("Background photo"));
             return l.toArray(new String[0]);
         }
 
@@ -662,7 +676,10 @@ public class SettingsActivity extends Activity {
             v[CITY_ROW] = !cityStatus.isEmpty() ? cityStatus : Prefs.city().isEmpty() ? "—" : Prefs.city();
             v[6] = onOff(Prefs.quotes());
             // No quotes widget, nowhere to show prices: the coins read as off (and stay locked) until it is back on.
-            for (int i = COIN_ROWS; i < v.length; i++) v[i] = onOff(Prefs.quotes() && Prefs.coin(i - COIN_ROWS));
+            int photo = photoRow();
+            for (int i = COIN_ROWS; i < v.length; i++) {
+                v[i] = i == photo ? onOff(Prefs.wallpaper()) : onOff(Prefs.quotes() && Prefs.coin(i - COIN_ROWS));
+            }
             return v;
         }
 
@@ -743,6 +760,10 @@ public class SettingsActivity extends Activity {
                 case CITY_ROW: return;
                 case 6: Prefs.setQuotes(!Prefs.quotes()); break;
                 default:
+                    if (focus == photoRow()) {
+                        Prefs.setWallpaper(!Prefs.wallpaper());
+                        break;
+                    }
                     if (!Prefs.quotes()) return;
                     Prefs.setCoin(focus - COIN_ROWS, !Prefs.coin(focus - COIN_ROWS));
                     break;
@@ -940,14 +961,16 @@ public class SettingsActivity extends Activity {
             String[] labels = keys ? keyLabels() : settingLabels();
             String[] values = keys ? keyValues() : settingValues();
             Paint heading = Ui.text(Ui.displaySemibold, 34 * k, 0xFFFFFFFF);
+            float shift = listShift();
             c.drawText(keys ? Ui.tr("Remote Buttons") : Ui.tr("Home Settings"),
-                    LIST_X * k + 30 * k, (LIST_TOP - 24) * k, heading);
+                    LIST_X * k + 30 * k, (LIST_TOP - 24 - shift) * k, heading);
+            int photo = keys ? -1 : photoRow();
             for (int i = 0; i < labels.length; i++) {
-                float y = (LIST_TOP + 20 + i * (LIST_ROW_H + LIST_ROW_GAP)) * k;
+                float y = (LIST_TOP + 20 + i * (LIST_ROW_H + LIST_ROW_GAP) - shift) * k;
                 rowRect.set(LIST_X * k, y, LIST_R * k, y + LIST_ROW_H * k);
                 float f = drawRowBackground(c, i);
                 rowLabel.setColor(blend(0xF2FFFFFF, INK, f));
-                boolean locked = !keys && i >= COIN_ROWS && !Prefs.quotes();
+                boolean locked = !keys && i >= COIN_ROWS && i != photo && !Prefs.quotes();
                 rowValue.setColor(blend(locked ? 0x59FFFFFF : 0xB3FFFFFF, locked ? 0x591C1C1E : 0xB31C1C1E, f));
                 if (locked) rowLabel.setColor(blend(0x73FFFFFF, 0x731C1C1E, f));
                 float base = rowRect.centerY() + Ui.halfCap(rowLabel);
@@ -955,7 +978,7 @@ public class SettingsActivity extends Activity {
                 c.drawText(values[i], rowRect.right - 30 * k, base, rowValue);
             }
             Paint hint = Ui.text(Ui.regular, 23 * k, 0x8CFFFFFF);
-            float hy = (LIST_TOP + 20 + labels.length * (LIST_ROW_H + LIST_ROW_GAP) + 36) * k;
+            float hy = (LIST_TOP + 20 + labels.length * (LIST_ROW_H + LIST_ROW_GAP) + 36 - shift) * k;
             c.drawText(Ui.tr("OK or the arrows change the value."), LIST_X * k + 30 * k, hy, hint);
             if (keys) {
                 c.drawText(RemoteKeys.VESTEL ? Ui.tr("YouTube, Prime Video and Google Play: the TV itself controls those buttons.")
