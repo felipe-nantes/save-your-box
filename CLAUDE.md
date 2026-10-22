@@ -172,6 +172,17 @@ HDMI (Chromecast with Google TV, Google TV Streamer, onn 4K, NVIDIA Shield). Set
   a UTC−3 zone without it. Plain shell can't (`SET_TIME_ZONE`): Home Settings → Time zone sets it through the app's
   ADB as root (`su`, Android 7 only, `HomeMode.setTimeZone`, checked with `getprop`); elsewhere it opens Date & time.
   While the computer holds the ADB it falls back too. Chrome is its WebView: never turn it off.
+- The phone remote: `RemoteServer` (a service in the main process, port 8765; Android 8+ as a foreground service)
+  serves `assets/remote.html`, its `{{name}}`s filled from `pageText()` (literal `Ui.tr` calls). Only site-local
+  addresses, and only with the key in `files/remote-key` (the QR code on the settings screen's left, drawn by `Qr`,
+  no library; after the first visit it's a cookie). `RemoteInput` sends keys through the app's own ADB: it finds the
+  input device that sends DPAD_CENTER (`getevent -p` and its `.kl`; the shell's `input` group may write there) and
+  writes the raw events with one `echo -ne` (checked once), else sendevent, else `input keyevent` (1-2 s on a slow
+  box). It closes its connection after 5 s idle, for adbds that serve one connection. The sleep timer (AlarmManager →
+  `HomeReceiver` SLEEP) and "turn off" send SLEEP and switch on `hdmi_control_auto_device_off_enabled`, so a box's
+  standby turns the TV off over HDMI-CEC. Photos sent from the phone (`Photos`, files/photos, up to 60) replace the
+  picks in the screensaver (`DreamView.showcase()`), with no caption. `HomeApps.BOX_APPS` adds the box's mirroring and
+  USB player to the drawer.
 - `wallpaper=` packs their photo as `assets/wallpaper.jpg` (build.sh, from `out/assets`, so it stays out of git);
   `Backdrop.wallpaper` builds it once per process, sharp, and `HomeView.showBackdrop` uses it instead of the picks'.
   Android 9 and older have no RenderNode (`Recording` wraps it, with a Picture there) and no `cmd role`. On Android 8 to 11

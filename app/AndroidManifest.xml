@@ -8,6 +8,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- After the TV boots (and after a TV update), checks that Free My TV mode is still as you left it. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- The phone remote's web server keeps running on Android 8 and newer (with a quiet notification). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <!-- Android 11+: without this list the app can't "see" the other apps (getLeanbackLaunchIntentForPackage
          returns null). The shelf and streaming apps, the live TV apps and, through the <intent>, every TV app
@@ -128,6 +130,11 @@
             android:name=".ModeJob"
             android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <!-- The phone remote: a web page on the home network (the settings screen shows its QR code). Main process. -->
+        <service
+            android:name=".RemoteServer"
+            android:exported="false" />
 
         <!-- The remote's app buttons from inside any app (Settings > Remote Buttons). Its own process: the system waits for it on
              every key, so the home screen must never be able to slow it down. -->

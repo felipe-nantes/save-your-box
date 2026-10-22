@@ -216,9 +216,22 @@ final class HomeApps {
         return shortcut(SETTINGS, "settings", Ui.tr("Settings"), "settings");
     }
 
+    /** The box's own screen mirroring (Miracast) and USB drive player, when it has them: package, symbol. */
+    private static final String[][] BOX_APPS = {
+        {"com.rockchip.wfd", "sync"},              // Rockchip boxes: mirroring from an Android phone
+        {"com.rockchips.mediacenter", "play"},     // Rockchip boxes: videos, music and photos on a USB drive
+    };
+
     /** Shortcuts in the bottom drawer. */
-    static List<Item> drawerShortcuts() {
+    static List<Item> drawerShortcuts(Context c) {
         List<Item> items = new ArrayList<>();
+        String[] labels = {Ui.tr("Mirror phone"), Ui.tr("USB drive")};
+        for (int i = 0; i < BOX_APPS.length; i++) {
+            if (launchIntent(c.getPackageManager(), BOX_APPS[i][0]) == null) continue;
+            Item it = app(BOX_APPS[i][0], labels[i]);
+            it.symbol = BOX_APPS[i][1];
+            items.add(it);
+        }
         items.add(shortcut(ALL_APPS, "all", Ui.tr("All Apps"), "apps"));
         items.add(shortcut(SETTINGS, "settings", Ui.tr("Home Settings"), "settings"));
         items.add(shortcut(ANDROID_SETTINGS, "tv-settings", Ui.tr("TV Settings"), "tv_settings"));

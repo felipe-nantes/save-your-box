@@ -51,6 +51,7 @@ public class SettingsActivity extends Activity {
         super.onCreate(savedInstanceState);
         Watchdog.install(this);
         Ui.init(this);
+        RemoteServer.start(this);
         view = new SettingsView(this);
         setContentView(view);
     }
@@ -146,6 +147,7 @@ public class SettingsActivity extends Activity {
         private long startedAt, lastNanos, pendingAt, lastSky;
         private int w, h;
         private float k = 1;
+        private Paint remoteLabel;
         private Paint title, subtitle, version, rowLabel, rowValue, rowSub, header, cellLabel, cellValue, warn, spinner, white, shadow;
         private TextPaint notice;
 
@@ -155,6 +157,7 @@ public class SettingsActivity extends Activity {
                 state = HomeMode.state(getContext());
                 hasKey = Recs.hasKey(getContext());
                 recs = Recs.status(getContext());
+                updateRemote();
                 boolean nowBusy = !busyText().isEmpty();
                 if (nowBusy) pendingAt = 0;
                 // A switch just ended: TalkBack reads how it went (the newest notice).
@@ -297,6 +300,8 @@ public class SettingsActivity extends Activity {
             subtitle.setTextAlign(Paint.Align.CENTER);
             version = Ui.text(Ui.regular, 22 * k, 0x66FFFFFF);
             version.setTextAlign(Paint.Align.CENTER);
+            remoteLabel = Ui.text(Ui.medium, 28 * k, 0xEBFFFFFF);
+            remoteLabel.setTextAlign(Paint.Align.CENTER);
             rowLabel = Ui.text(Ui.medium, 30 * k, 0xF2FFFFFF);
             rowValue = Ui.text(Ui.regular, 28 * k, 0x8CFFFFFF);
             rowValue.setTextAlign(Paint.Align.RIGHT);
@@ -360,14 +365,51 @@ public class SettingsActivity extends Activity {
             }
             scene.drawBackground(c);
 
-            // On the left: big symbol, title, description.
-            float cx = 500 * k;
-            Symbols.draw(getContext(), c, "sparkles", cx, 400 * k, 150 * k, 0xEBFFFFFF);
-            c.drawText("Free My TV", cx, 612 * k, title);
-            c.drawText(Ui.tr("Your TV's home screen and screensaver"), cx, 660 * k, subtitle);
-            c.drawText(versionName(getContext()), cx, 704 * k, version);
+            // On the left: big symbol, title, description; under them (moved up), the phone remote's QR code.
+            float cx = 500 * k, lift = remoteQr != null ? 150 : 0;
+            Symbols.draw(getContext(), c, "sparkles", cx, (400 - lift) * k, 150 * k, 0xEBFFFFFF);
+            c.drawText("Free My TV", cx, (612 - lift) * k, title);
+            c.drawText(Ui.tr("Your TV's home screen and screensaver"), cx, (660 - lift) * k, subtitle);
+            c.drawText(versionName(getContext()), cx, (704 - lift) * k, version);
+            if (remoteQr != null) drawRemote(c, cx);
 
             if (screen == MAIN) drawMain(c, seconds); else if (screen == HOME_CHOICE) drawChoice(c); else if (screen == PICKER) drawPicker(c); else if (screen == SHELF_EDIT) drawShelfEditor(c); else drawList(c);
+        }
+
+        private String remoteUrl;
+        private android.graphics.Bitmap remoteQr;   // one pixel per module, with the 4-module quiet zone
+        private final RectF qrRect = new RectF();
+        private final android.graphics.Path qrClip = new android.graphics.Path();
+        private final Paint qrPaint = new Paint();   // no filtering: crisp modules
+
+        /** The phone remote's address and its QR code, made again when the TV's address changes. */
+        private void updateRemote() {
+            String url = RemoteServer.url(getContext());
+            if (url == null ? remoteUrl == null : url.equals(remoteUrl)) return;
+            remoteUrl = url;
+            remoteQr = null;
+            boolean[][] m = url == null ? null : Qr.encode(url);
+            if (m == null) return;
+            int n = m.length, q = 4, size = n + 2 * q;
+            int[] px = new int[size * size];
+            java.util.Arrays.fill(px, 0xFFFFFFFF);
+            for (int y = 0; y < n; y++) for (int x = 0; x < n; x++) if (m[y][x]) px[(y + q) * size + x + q] = 0xFF000000;
+            remoteQr = android.graphics.Bitmap.createBitmap(px, size, size, android.graphics.Bitmap.Config.ARGB_8888);
+        }
+
+        /** The phone remote: its name, the QR code to scan and the address (to type it instead). */
+        private void drawRemote(Canvas c, float cx) {
+            c.drawText(Ui.tr("Phone remote"), cx, 630 * k, remoteLabel);
+            float size = 240 * k, top = 655 * k;
+            qrRect.set(cx - size / 2, top, cx + size / 2, top + size);
+            qrClip.reset();
+            qrClip.addRoundRect(qrRect, 18 * k, 18 * k, android.graphics.Path.Direction.CW);
+            c.save();
+            c.clipPath(qrClip);
+            c.drawBitmap(remoteQr, null, qrRect, qrPaint);
+            c.restore();
+            c.drawText(Ui.tr("Scan with your phone's camera"), cx, 940 * k, subtitle);
+            c.drawText(remoteUrl.substring(7, remoteUrl.indexOf("/?")), cx, 978 * k, version);
         }
 
         private void drawMain(Canvas c, float seconds) {

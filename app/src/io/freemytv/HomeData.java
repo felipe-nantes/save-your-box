@@ -244,7 +244,11 @@ final class HomeData {
 
     private static Weather parseWeather(String body) throws Exception {
         JSONObject o = new JSONObject(body);
-        TimeZone zone = TimeZone.getTimeZone(o.optString("timezone", TimeZone.getDefault().getID()));
+        // The place's offset as Open-Meteo gives it, not from the TV's time zone data, which may be out of date (old
+        // boxes still have Brazil's summer time: sunrise and sunset an hour off).
+        TimeZone zone = o.has("utc_offset_seconds")
+                ? new java.util.SimpleTimeZone(o.getInt("utc_offset_seconds") * 1000, "place")
+                : TimeZone.getTimeZone(o.optString("timezone", TimeZone.getDefault().getID()));
         Weather w = new Weather();
         JSONObject current = o.getJSONObject("current");
         w.temp = current.getDouble("temperature_2m");
