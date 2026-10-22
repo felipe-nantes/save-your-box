@@ -122,7 +122,7 @@ public class SettingsActivity extends Activity {
         private final SettingsActivity activity;
         private final Scene scene = new Scene();
         private final Handler handler = new Handler(Looper.getMainLooper());
-        private final Spring[] pop = new Spring[12];
+        private final Spring[] pop = new Spring[14];
         private final List<String> appPkgs = new ArrayList<>(), appLabels = new ArrayList<>();
         // The list picker (the app of a remote button): what it shows, which one is in use, where we are.
         private final List<String> pickLabels = new ArrayList<>();
@@ -130,9 +130,11 @@ public class SettingsActivity extends Activity {
         private final List<String[]> shelfRows = new ArrayList<>();
         private final List<String> shelfOrder = new ArrayList<>();
         private int pickFor, pickCurrent, pickScroll;   // pickFor: the remote button (index + 1)
-        private static final int PICK_CITY = 0, PICK_LANGUAGE = -1;
+        private static final int PICK_CITY = 0, PICK_LANGUAGE = -1, PICK_ZONE = -2;
         private final List<String[]> cities = new ArrayList<>();
         private String cityStatus = "";
+        private String zoneStatus = "";                       // "…" while the time zone changes
+        private final List<String> zoneIds = new ArrayList<>();
         private final RectF tmp = new RectF(), rowRect = new RectF(), focusBox = new RectF();
         private JSONObject state = new JSONObject(), recs = new JSONObject();
         private boolean hasKey;
@@ -601,8 +603,8 @@ public class SettingsActivity extends Activity {
                         if (e.getRepeatCount() == 0) backDown = true;
                     } else {
                         if (backDown && !e.isCanceled()) {
-                            if (screen == PICKER && (pickFor == PICK_CITY || pickFor == PICK_LANGUAGE)) {
-                                focus = pickFor == PICK_CITY ? CITY_ROW : 0;
+                            if (screen == PICKER && (pickFor == PICK_CITY || pickFor == PICK_LANGUAGE || pickFor == PICK_ZONE)) {
+                                focus = pickFor == PICK_CITY ? CITY_ROW : pickFor == PICK_ZONE ? ZONE_ROW : 0;
                                 screen = HOME_SETTINGS;
                             } else if (screen == PICKER) {
                                 focus = pickFor - 1;
@@ -625,8 +627,8 @@ public class SettingsActivity extends Activity {
         // MARK: - Home Settings and Remote Buttons
 
         private static final String[] UNITS = {"auto", "C", "F"}, THEMES = {"auto", "light", "dark"};
-        /** Home Settings: language, temperature, theme, sounds, weather, city, quotes, then one row per coin. */
-        private static final int CITY_ROW = 5, COIN_ROWS = 7;
+        /** Home Settings: language, temperature, theme, sounds, weather, city, time zone, quotes, then one row per coin. */
+        private static final int CITY_ROW = 5, ZONE_ROW = 6, QUOTES_ROW = 7, COIN_ROWS = 8;
 
         private boolean dollar() {
             return "BRL".equalsIgnoreCase(Config.CURRENCY.trim());
@@ -637,12 +639,14 @@ public class SettingsActivity extends Activity {
             return Backdrop.hasWallpaper(getContext()) ? COIN_ROWS + 3 + (dollar() ? 1 : 0) : -1;
         }
 
-        /** Home Settings with more rows than fit (the photo's switch): the list moves up while the focus is low. */
+        /** Home Settings with more rows than fit: the list moves up as the focus goes down, the next row in sight. */
         private float listShift() {
             if (screen != HOME_SETTINGS) return 0;
             int rows = settingLabels().length;
-            float over = LIST_TOP + 20 + rows * (LIST_ROW_H + LIST_ROW_GAP) + 36 - 1060;   // the hint's baseline
-            return over > 0 && focus >= rows - 3 ? over : 0;
+            float step = LIST_ROW_H + LIST_ROW_GAP;
+            float over = LIST_TOP + 20 + rows * step + 36 - 1060;   // the hint's baseline
+            float below = LIST_TOP + 20 + (Math.min(focus + 2, rows)) * step - (1060 - 36);
+            return Math.max(0, Math.min(over, below));
         }
 
         private String[] settingLabels() {
@@ -653,6 +657,7 @@ public class SettingsActivity extends Activity {
             l.add(Ui.tr("Navigation sounds"));
             l.add(Ui.tr("Weather widget"));
             l.add(Ui.tr("City"));
+            l.add(Ui.tr("Time zone"));
             l.add(Ui.tr("Quotes widget"));
             l.add("Bitcoin");
             l.add("Ethereum");
@@ -674,7 +679,8 @@ public class SettingsActivity extends Activity {
             v[3] = onOff(Prefs.sounds());
             v[4] = onOff(Prefs.weather());
             v[CITY_ROW] = !cityStatus.isEmpty() ? cityStatus : Prefs.city().isEmpty() ? "—" : Prefs.city();
-            v[6] = onOff(Prefs.quotes());
+            v[ZONE_ROW] = !zoneStatus.isEmpty() ? zoneStatus : zoneLabel(java.util.TimeZone.getDefault().getID());
+            v[QUOTES_ROW] = onOff(Prefs.quotes());
             // No quotes widget, nowhere to show prices: the coins read as off (and stay locked) until it is back on.
             int photo = photoRow();
             for (int i = COIN_ROWS; i < v.length; i++) {
@@ -734,6 +740,72 @@ public class SettingsActivity extends Activity {
             }
         }
 
+        /** Time zones offered: Brazil's and one or two per region elsewhere, plus the TV's own (if missing). */
+        private static final String[] ZONES = {
+            "Pacific/Honolulu", "America/Anchorage", "America/Los_Angeles", "America/Denver", "America/Chicago",
+            "America/Mexico_City", "America/New_York", "America/Bogota", "America/Lima", "America/Caracas",
+            "America/Santiago", "America/Rio_Branco", "America/Porto_Velho", "America/Manaus", "America/Cuiaba",
+            "America/Campo_Grande", "America/Sao_Paulo", "America/Fortaleza", "America/Recife", "America/Belem",
+            "America/Bahia", "America/Argentina/Buenos_Aires", "America/Montevideo", "America/Asuncion",
+            "America/Noronha", "Atlantic/Azores", "Europe/Lisbon", "Europe/London", "Europe/Madrid", "Europe/Paris",
+            "Europe/Berlin", "Europe/Rome", "Africa/Luanda", "Africa/Maputo", "Europe/Athens", "Europe/Moscow",
+            "Asia/Dubai", "Asia/Kolkata", "Asia/Shanghai", "Asia/Tokyo", "Australia/Sydney", "Pacific/Auckland",
+        };
+
+        /** The zones the TV knows, by the offset it uses for each now (so an outdated summer time shows). */
+        private void loadZones() {
+            zoneIds.clear();
+            Set<String> known = new HashSet<>(java.util.Arrays.asList(java.util.TimeZone.getAvailableIDs()));
+            for (String id : ZONES) if (known.contains(id)) zoneIds.add(id);
+            String current = java.util.TimeZone.getDefault().getID();
+            if (!zoneIds.contains(current)) zoneIds.add(current);
+            long now = System.currentTimeMillis();
+            Collections.sort(zoneIds, (a, b) -> {
+                int d = Integer.compare(java.util.TimeZone.getTimeZone(a).getOffset(now), java.util.TimeZone.getTimeZone(b).getOffset(now));
+                return d != 0 ? d : zoneName(a).compareTo(zoneName(b));
+            });
+        }
+
+        /** "Fortaleza · GMT−03:00": the zone's city and the offset the TV uses for it now. */
+        private static String zoneLabel(String id) {
+            int off = java.util.TimeZone.getTimeZone(id).getOffset(System.currentTimeMillis()) / 60_000;
+            return zoneName(id) + " · GMT" + (off < 0 ? "−" : "+")
+                    + String.format(Locale.ROOT, "%02d:%02d", Math.abs(off) / 60, Math.abs(off) % 60);
+        }
+
+        /** The zone's city in the screen's language (ICU), else from its id ("America/Sao_Paulo" → "Sao Paulo"). */
+        private static String zoneName(String id) {
+            try {
+                String name = android.icu.text.TimeZoneNames.getInstance(Ui.locale()).getExemplarLocationName(id);
+                if (name != null && !name.isEmpty()) return name;
+            } catch (RuntimeException ignored) {
+            }
+            return id.substring(id.lastIndexOf('/') + 1).replace('_', ' ');
+        }
+
+        /** Sets the TV's time zone through its own ADB (HomeMode.setTimeZone); where it can't, the system's Date & time. */
+        private void setZone(String id) {
+            if (!zoneStatus.isEmpty() || id.equals(java.util.TimeZone.getDefault().getID())) return;
+            zoneStatus = "…";
+            final Context app = getContext().getApplicationContext();
+            new Thread(() -> {
+                final boolean set = HomeMode.setTimeZone(app, id);
+                post(() -> {
+                    zoneStatus = "";
+                    if (set) {
+                        java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone(id));   // before the system's broadcast arrives
+                    } else {
+                        try {
+                            activity.startActivity(new Intent(Settings.ACTION_DATE_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                        } catch (RuntimeException e) {
+                            AppLog.w("no date settings: " + e.getMessage());
+                        }
+                    }
+                    invalidate();
+                });
+            }, "time-zone").start();
+        }
+
         /** Changes the focused row's value one step (OK and → go forward, ← goes back). */
         private void adjust(int dir) {
             if (screen == REMOTE_KEYS) {
@@ -758,7 +830,8 @@ public class SettingsActivity extends Activity {
                 case 3: Prefs.setSounds(!Prefs.sounds()); break;
                 case 4: Prefs.setWeather(!Prefs.weather()); break;
                 case CITY_ROW: return;
-                case 6: Prefs.setQuotes(!Prefs.quotes()); break;
+                case ZONE_ROW: return;   // OK opens the time zone picker.
+                case QUOTES_ROW: Prefs.setQuotes(!Prefs.quotes()); break;
                 default:
                     if (focus == photoRow()) {
                         Prefs.setWallpaper(!Prefs.wallpaper());
@@ -920,6 +993,10 @@ public class SettingsActivity extends Activity {
                     pickLabels.add(code.equals("auto") ? Ui.tr("Automatic") : Ui.languageName(code));
                 }
                 pickCurrent = java.util.Arrays.asList(choices).indexOf(Prefs.language());
+            } else if (which == PICK_ZONE) {
+                loadZones();
+                for (String id : zoneIds) pickLabels.add(zoneLabel(id));
+                pickCurrent = zoneIds.indexOf(java.util.TimeZone.getDefault().getID());
             } else {
                 pickLabels.addAll(appLabels);
                 pickCurrent = appPkgs.indexOf(Prefs.keyApp(Prefs.KEYS[which - 1]));
@@ -935,7 +1012,8 @@ public class SettingsActivity extends Activity {
         private void drawPicker(Canvas c) {
             Paint heading = Ui.text(Ui.displaySemibold, 34 * k, 0xFFFFFFFF);
             String title = pickFor == PICK_CITY ? Ui.tr("City")
-                    : pickFor == PICK_LANGUAGE ? Ui.tr("Language") : keyLabels()[pickFor - 1];
+                    : pickFor == PICK_LANGUAGE ? Ui.tr("Language")
+                    : pickFor == PICK_ZONE ? Ui.tr("Time zone") : keyLabels()[pickFor - 1];
             c.drawText(title, LIST_X * k + 30 * k, (LIST_TOP - 24) * k, heading);
             int rows = rowCount();
             for (int i = 0; i < rows; i++) {
@@ -962,8 +1040,10 @@ public class SettingsActivity extends Activity {
             String[] values = keys ? keyValues() : settingValues();
             Paint heading = Ui.text(Ui.displaySemibold, 34 * k, 0xFFFFFFFF);
             float shift = listShift();
-            c.drawText(keys ? Ui.tr("Remote Buttons") : Ui.tr("Home Settings"),
-                    LIST_X * k + 30 * k, (LIST_TOP - 24 - shift) * k, heading);
+            if (LIST_TOP - 24 - shift >= 50) {   // scrolled far, it would be cut at the top
+                c.drawText(keys ? Ui.tr("Remote Buttons") : Ui.tr("Home Settings"),
+                        LIST_X * k + 30 * k, (LIST_TOP - 24 - shift) * k, heading);
+            }
             int photo = keys ? -1 : photoRow();
             for (int i = 0; i < labels.length; i++) {
                 float y = (LIST_TOP + 20 + i * (LIST_ROW_H + LIST_ROW_GAP) - shift) * k;
@@ -1011,6 +1091,10 @@ public class SettingsActivity extends Activity {
                 Prefs.setLanguage(languageChoices()[pickScroll + focus]);
                 focus = 0;
                 screen = HOME_SETTINGS;
+            } else if (screen == PICKER && pickFor == PICK_ZONE) {
+                setZone(zoneIds.get(pickScroll + focus));
+                focus = ZONE_ROW;
+                screen = HOME_SETTINGS;
             } else if (screen == PICKER) {
                 int at = pickScroll + focus;
                 Prefs.setKeyApp(Prefs.KEYS[pickFor - 1], appPkgs.get(at));
@@ -1027,6 +1111,8 @@ public class SettingsActivity extends Activity {
             } else if (screen == HOME_SETTINGS && focus == CITY_ROW) {
                 askCity();
                 return;
+            } else if (screen == HOME_SETTINGS && focus == ZONE_ROW) {
+                if (zoneStatus.isEmpty()) openPicker(PICK_ZONE);
             } else if (screen == HOME_SETTINGS) {
                 adjust(1);
                 invalidate();

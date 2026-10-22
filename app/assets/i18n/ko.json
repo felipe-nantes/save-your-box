@@ -121,6 +121,7 @@
  "Theme": "테마",
  "This product uses the TMDB API but is not endorsed or certified by TMDB.": "이 제품은 TMDB API를 사용하지만 TMDB의 보증이나 인증을 받지 않았습니다.",
  "Thunderstorms": "뇌우",
+ "Time zone": "시간대",
  "Turned off what was missing: {list}.": "남아 있던 항목을 껐습니다: {list}.",
  "Turning apps back on ({done}/{total})…": "앱 다시 켜는 중({done}/{total})…",
  "Turning off apps ({done}/{total})…": "앱 끄는 중({done}/{total})…",

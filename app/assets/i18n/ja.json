@@ -121,6 +121,7 @@
  "Theme": "テーマ",
  "This product uses the TMDB API but is not endorsed or certified by TMDB.": "TMDB APIを使用。TMDBの承認・認定は受けていません。",
  "Thunderstorms": "雷雨",
+ "Time zone": "タイムゾーン",
  "Turned off what was missing: {list}.": "残っていたものをオフにしました：{list}。",
  "Turning apps back on ({done}/{total})…": "アプリをオンに戻しています（{done}/{total}）…",
  "Turning off apps ({done}/{total})…": "アプリをオフにしています（{done}/{total}）…",

@@ -155,6 +155,22 @@ final class HomeMode {
         "com.example.changeled", "android.rockchip.update.service", "com.rockchip.wfd", "com.android.rockchip",
         "com.rockchips.mediacenter"));
 
+    /**
+     * Sets the TV's time zone through its own ADB as root (`su`): only system apps may set it, not the plain shell.
+     * For Android 7 boxes that have `su` (the RK322x "MXQ Pro"), whose old time zone data still has Brazil's summer
+     * time; AlarmManager's call 3 is setTimeZone there. True when the TV now uses that zone.
+     */
+    static boolean setTimeZone(Context c, String id) {
+        if (Build.VERSION.SDK_INT > 25 || !id.matches("[\\w/+-]+")) return false;
+        try (Adb adb = Adb.connect(c, 10_000, null)) {
+            adb.shell("su 0 service call alarm 3 s16 " + id);
+            return id.equals(adb.shell("getprop persist.sys.timezone").trim());
+        } catch (IOException | RuntimeException e) {
+            AppLog.w("time zone: " + e.getMessage());
+            return false;
+        }
+    }
+
     /** One switch at a time (jobs can overlap: a boot check and a button press). */
     private static final Object RUN = new Object();
     private static final Object FILE_LOCK = new Object();

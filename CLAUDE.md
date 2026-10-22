@@ -169,7 +169,9 @@ HDMI (Chromecast with Google TV, Google TV Streamer, onn 4K, NVIDIA Shield). Set
   (`install -r`) drops Free My TV back to `interpret-only`: compile it again. Its font is read once there (`Ui.inter`).
   Its clock has no battery: after a reboot it starts at 1970 until NTP answers, and its `ntp_server` was empty
   (set to `a.ntp.br`). Its old time zone data still has Brazil's summer time: São Paulo shows an hour ahead, so pick
-  a UTC−3 zone without it (shell can't set the zone: `SET_TIME_ZONE`). Chrome is its WebView: never turn it off.
+  a UTC−3 zone without it. Plain shell can't (`SET_TIME_ZONE`): Home Settings → Time zone sets it through the app's
+  ADB as root (`su`, Android 7 only, `HomeMode.setTimeZone`, checked with `getprop`); elsewhere it opens Date & time.
+  While the computer holds the ADB it falls back too. Chrome is its WebView: never turn it off.
 - `wallpaper=` packs their photo as `assets/wallpaper.jpg` (build.sh, from `out/assets`, so it stays out of git);
   `Backdrop.wallpaper` builds it once per process, sharp, and `HomeView.showBackdrop` uses it instead of the picks'.
   Android 9 and older have no RenderNode (`Recording` wraps it, with a Picture there) and no `cmd role`. On Android 8 to 11
