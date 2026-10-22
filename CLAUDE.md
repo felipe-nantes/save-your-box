@@ -172,6 +172,9 @@ HDMI (Chromecast with Google TV, Google TV Streamer, onn 4K, NVIDIA Shield). Set
   a UTC−3 zone without it. Plain shell can't (`SET_TIME_ZONE`): Home Settings → Time zone sets it through the app's
   ADB as root (`su`, Android 7 only, `HomeMode.setTimeZone`, checked with `getprop`); elsewhere it opens Date & time.
   While the computer holds the ADB it falls back too. Chrome is its WebView: never turn it off.
+  Its HDMI out came at 4096x2160p-24 (/cache/display.cfg, the iface=4 line; live: /sys/class/display/HDMI/mode):
+  the UI showed at 24 fps. 1920x1080p-60 fixed it (backup in /cache/display.cfg.bak). Its `su` mangles quoted
+  `sh -c` commands: push a script to /data/local/tmp and run `su 0 sh` on it.
 - The phone remote: `RemoteServer` (a service in the main process, port 8765; Android 8+ as a foreground service)
   serves `assets/remote.html`, its `{{name}}`s filled from `pageText()` (literal `Ui.tr` calls). Only site-local
   addresses, and only with the key in `files/remote-key` (the QR code on the settings screen's left, drawn by `Qr`,
