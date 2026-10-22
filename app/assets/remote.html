@@ -51,6 +51,11 @@
                                   align-items: center; justify-content: center; font-weight: 600; cursor: pointer; }
   .photos label { background: #0a84ff; color: #fff; }
   .photos input { display: none; }
+  [hidden] { display: none !important; }
+  .seg { display: flex; background: #1c1c21; border-radius: 12px; padding: 3px; margin-left: auto; margin-right: 12px; }
+  .seg button { height: 32px; padding: 0 14px; border-radius: 9px; background: transparent; color: #8e8e93; font-weight: 600; font-size: 14px; }
+  .seg button.on { background: #f2f2f7; color: #111; }
+  .tvrow { grid-template-columns: 1fr 1fr; }
   #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(120px); background: #2c2c33;
            padding: 12px 18px; border-radius: 14px; transition: transform 0.25s; box-shadow: 0 8px 24px #000a; }
   #toast.show { transform: translateX(-50%) translateY(0); }
@@ -59,7 +64,9 @@
 <body data-noreply="{{noreply}}" data-turnsoff="{{turnsoff}}" data-onTv="{{ontv}}"
       data-sending="{{sending}}" data-confirmOff="{{confirmoff}}"
       data-confirmDelete="{{confirmdelete}}">
-<header><h1>{{title}}</h1><span id="dot"></span></header>
+<header><h1>{{title}}</h1>
+  <div class="seg" id="seg" hidden><button data-mode="box" class="on">Box</button><button data-mode="tv">TV</button></div>
+  <span id="dot"></span></header>
 
 <div class="pad">
   <button class="arrow up" data-key="DPAD_UP" aria-label="up">▲</button>
@@ -84,12 +91,17 @@
   <button class="key" data-key="MEDIA_PLAY_PAUSE" aria-label="play pause"><span class="i">⏯</span></button>
   <button class="key" data-key="MEDIA_FAST_FORWARD" aria-label="forward"><span class="i">⏩</span></button>
 </div>
+<div class="row tvrow" id="tvrow" hidden>
+  <button class="key" data-key="SOURCE" data-tv="1"><span class="i">⇄</span>{{input}}</button>
+  <button class="key" data-key="POWER" data-tv="1"><span class="i">⏻</span>{{tvoff}}</button>
+</div>
+<div class="note" id="tvnote" hidden>{{tvon}}</div>
 
 <section>
   <h2>{{search}}</h2>
   <form class="type" id="typeForm">
     <input id="text" autocomplete="off" autocapitalize="off" enterkeyhint="send" placeholder="{{typehere}}">
-    <button type="button" class="del" data-key="DEL" aria-label="delete">⌫</button>
+    <button type="button" class="del" data-key="DEL" data-box="1" aria-label="delete">⌫</button>
     <button type="submit">{{send}}</button>
   </form>
 </section>
@@ -151,14 +163,34 @@
   function buzz() { if (navigator.vibrate) navigator.vibrate(12); }
 
   // Keys: one press, and held arrows repeat.
+  // Box or TV (a TCL TV on the network): the arrows, OK and the rest go to the one picked; the volume, to the TV.
+  var hasTv = false, mode = 'box';
+  try { mode = localStorage.getItem('fmtvmode') || 'box'; } catch (e) {}
+  function setMode(m) {
+    mode = m;
+    try { localStorage.setItem('fmtvmode', m); } catch (e) {}
+    document.querySelectorAll('#seg button').forEach(function (b) { b.classList.toggle('on', b.dataset.mode === m); });
+  }
+  document.querySelectorAll('#seg button').forEach(function (b) {
+    b.addEventListener('click', function () { buzz(); setMode(b.dataset.mode); });
+  });
+  function pathFor(b) {
+    if (b.dataset.tv) return '/tv';
+    if (b.dataset.box || !hasTv) return '/key';
+    return mode === 'tv' || /^VOLUME_/.test(b.dataset.key) ? '/tv' : '/key';
+  }
   var queue = Promise.resolve();
-  function send(key) { buzz(); queue = queue.then(function () { return post('/key', key); }).catch(function () {}); }
+  function send(b) {
+    buzz();
+    var path = pathFor(b), key = b.dataset.key;
+    queue = queue.then(function () { return post(path, key); }).catch(function () {});
+  }
   document.querySelectorAll('[data-key]').forEach(function (b) {
     var repeat;
     b.addEventListener('pointerdown', function (e) {
-      e.preventDefault(); send(b.dataset.key);
+      e.preventDefault(); send(b);
       if (b.classList.contains('arrow') || b.dataset.key === 'DEL') {
-        repeat = setTimeout(function again() { send(b.dataset.key); repeat = setTimeout(again, 220); }, 450);
+        repeat = setTimeout(function again() { send(b); repeat = setTimeout(again, 220); }, 450);
       }
     });
     ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) { b.addEventListener(ev, function () { clearTimeout(repeat); }); });
@@ -179,6 +211,9 @@
       var left = Math.ceil(s.timer / 60);
       document.getElementById('timerNote').textContent = s.timer > 0 ? minutes(left) : '';
       document.getElementById('photoNote').textContent = T.ontv.replace('#', s.photos);
+      hasTv = !!s.tv;
+      ['seg', 'tvrow', 'tvnote'].forEach(function (id) { document.getElementById(id).hidden = !hasTv; });
+      if (hasTv) setMode(mode);
       var apps = document.getElementById('apps');
       if (!apps.children.length) {
         s.apps.forEach(function (a) {

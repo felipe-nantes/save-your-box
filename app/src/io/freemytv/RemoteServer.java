@@ -85,6 +85,8 @@ public class RemoteServer extends Service {
                     server = new ServerSocket(PORT);
                     final ServerSocket s = server;
                     new Thread(() -> accept(s), "phone-remote").start();
+                    final Context app = getApplicationContext();
+                    if (TclTv.address(app) == null) pool.execute(() -> TclTv.find(app));   // a TCL TV it can control
                 } catch (IOException e) {
                     AppLog.w("phone remote: port " + PORT + ": " + e.getMessage());
                     server = null;
@@ -185,9 +187,15 @@ public class RemoteServer extends Service {
         try {
             switch (path) {
                 case "/key": RemoteInput.key(c, body); break;
+                case "/tv":
+                    if (!TclTv.key(c, body)) throw new IOException("the TV didn't take " + body);
+                    break;
                 case "/text": RemoteInput.text(c, body); break;
                 case "/open": RemoteInput.open(c, body); break;
-                case "/sleep": RemoteInput.sleep(c); break;
+                case "/sleep":
+                    TclTv.off(c);
+                    RemoteInput.sleep(c);
+                    break;
                 case "/timer": setTimer(c, Integer.parseInt(body)); break;
                 case "/photos/clear": Photos.clear(c); break;
                 default:
@@ -311,6 +319,9 @@ public class RemoteServer extends Service {
         t.put("photos", Ui.tr("Screensaver photos"));
         t.put("add", Ui.tr("Add photos"));
         t.put("deleteall", Ui.tr("Delete all"));
+        t.put("input", Ui.tr("Input"));
+        t.put("tvoff", Ui.tr("Turn off TV"));
+        t.put("tvon", Ui.tr("To turn it on: the TV's own button."));
         return t;
     }
 
@@ -325,6 +336,10 @@ public class RemoteServer extends Service {
             long at = sleepAt(this);
             o.put("timer", at > 0 ? Math.max(0, (at - System.currentTimeMillis()) / 1000) : 0);
             o.put("photos", Photos.list(this).size());
+            boolean tv = TclTv.address(this) != null;
+            o.put("tv", tv);
+            final Context context = getApplicationContext();
+            if (!tv) pool.execute(() -> TclTv.find(context));   // the TV was off: look again (at most once a minute)
             JSONArray apps = new JSONArray();
             for (String[] app : apps(this)) apps.put(new JSONObject().put("c", app[0]).put("n", app[1]));
             o.put("apps", apps);

@@ -21,6 +21,7 @@ public class HomeReceiver extends BroadcastReceiver {
             new Thread(() -> {
                 try {
                     RemoteServer.setTimer(app, 0);
+                    TclTv.off(app);
                     RemoteInput.sleep(app);
                 } catch (java.io.IOException e) {
                     AppLog.w("sleep timer: " + e.getMessage());

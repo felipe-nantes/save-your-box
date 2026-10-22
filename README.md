@@ -25,6 +25,7 @@ Open source. Built with Claude Code. One button to undo.
 - **A screensaver to match.** Full-screen photos of the picks with a big glass clock, or your own photos.
 - **Your phone as a remote.** Scan the QR code in Free My TV's settings: arrows, OK, volume, typing for search, apps,
   a sleep timer, turning the TV off (over HDMI-CEC, from a box) and photos for the screensaver. Nothing to install.
+  With a TCL TV that isn't Android, it also works the TV itself over the network: its volume, input and power.
 - **Fast.** 60 fps, every frame in 16.6 ms, on the TV's own chip. The home screen uses 96 MB of memory instead of 242 MB (−60%).<br><sub>Measured on a 98″ TCL Google TV running Android 14.</sub>
 - **Set up on the TV.** Language, your city, temperature, theme, the weather and prices cards, which coins, and the apps on the shelf, in Free My TV's own settings.
 - **Safe.** No root. Nothing is uninstalled. One button brings back the factory home screen.

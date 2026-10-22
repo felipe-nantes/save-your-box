@@ -183,6 +183,11 @@ HDMI (Chromecast with Google TV, Google TV Streamer, onn 4K, NVIDIA Shield). Set
   standby turns the TV off over HDMI-CEC. Photos sent from the phone (`Photos`, files/photos, up to 60) replace the
   picks in the screensaver (`DreamView.showcase()`), with no caption. `HomeApps.BOX_APPS` adds the box's mirroring and
   USB player to the drawer.
+  The RK322x box's firmware has no CEC driver (no /dev/cec, the HAL logs "open error!", physical address 0xFFFF):
+  it can't reach the TV over HDMI. A TCL TV that isn't Android takes keys over the network instead (`TclTv`: TCP
+  4123, TCL nScreen's XML `setKey`, found with SSDP and kept in files/tcl-tv). The page then shows Box | TV (the
+  arrows go to the one picked), the volume goes to the TV, and "turn off" and the timer turn the TV off too
+  (`TR_KEY_POWER`). Off, that TV leaves the network (no Wake-on-LAN): it turns on with its own button.
 - `wallpaper=` packs their photo as `assets/wallpaper.jpg` (build.sh, from `out/assets`, so it stays out of git);
   `Backdrop.wallpaper` builds it once per process, sharp, and `HomeView.showBackdrop` uses it instead of the picks'.
   Android 9 and older have no RenderNode (`Recording` wraps it, with a Picture there) and no `cmd role`. On Android 8 to 11
