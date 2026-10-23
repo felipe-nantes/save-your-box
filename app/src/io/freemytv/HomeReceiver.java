@@ -12,7 +12,7 @@ public class HomeReceiver extends BroadcastReceiver {
             HomeMode.bootCheck(context);
             RemoteServer.start(context);
         } else if (Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)) {
-            HomeMode.verify(context);   // app updated: complete Free My TV mode if something is missing
+            HomeMode.verify(context);   // app updated: complete Save Your Box mode if something is missing
             HomeMode.ensureRemoteService(context, 3_000);
             RemoteServer.start(context);
         } else if (RemoteServer.SLEEP.equals(action)) {

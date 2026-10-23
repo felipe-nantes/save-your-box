@@ -348,7 +348,7 @@ public class RemoteServer extends Service {
         return o.toString();
     }
 
-    /** The TV's apps that open from a launcher ({component, name}), by name; not Free My TV itself. */
+    /** The TV's apps that open from a launcher ({component, name}), by name; not Save Your Box itself. */
     private static List<String[]> apps(Context c) {
         PackageManager pm = c.getPackageManager();
         Map<String, String[]> byPkg = new HashMap<>();
@@ -367,7 +367,7 @@ public class RemoteServer extends Service {
 
     /** Without the key: the page kept on the phone tries again with it, else asks for the QR code. */
     private static byte[] denied() {
-        String text = escape(Ui.tr("Scan the QR code in Free My TV's settings on the TV."));
+        String text = escape(Ui.tr("Scan the QR code in Save Your Box's settings on the TV."));
         return ("<!doctype html><meta name=viewport content='width=device-width'><body style='font:18px system-ui;"
                 + "background:#0b0b0f;color:#eee;padding:32px'><script>try{var k=localStorage.getItem('fmtv');"
                 + "if(k&&location.search.indexOf('k='+k)<0){location.replace('/?k='+encodeURIComponent(k))}}catch(e){}"
