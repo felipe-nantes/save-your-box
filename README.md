@@ -41,6 +41,7 @@ Here's what we found inside:
 | The **Adups updater**, switched on | The same company as in 2016, as a system app that can install software |
 | **Not Play Protect certified** | One of the FBI's own warning signs; the Play Store won't even open app pages |
 | **Root from the factory**, and an ADB that asks no password | Turn on network ADB and anyone on your Wi-Fi gets full control |
+| **SELinux switched off** | Android's core security wall, the one that keeps apps from each other's data, wasn't there |
 | The system says **4 GB** of memory | About **2 GB** real: the rest is a made-up number |
 | **24 Hz** video, **no app ever compiled**, a clock back in **1970** after a reboot | YouTube took **40 seconds** to open |
 
@@ -92,6 +93,8 @@ Advance and PlayStation run well even on these slow chips.
 - **Get it from its makers.** The Play Store won't open its page on an uncertified box, so use the official 32-bit
   build, `RetroArch_ra32.apk`, from [buildbot.libretro.com/stable](https://buildbot.libretro.com/stable/) (signed by
   Libretro), and the cores from RetroArch's own *Online Updater*. Never from an "APK site".
+- **Put your games in a `ROMs` folder** (one per console); Claude Code can set RetroArch to open there and install
+  the cores for NES, SNES, Mega Drive, Game Boy, GBA and PlayStation from the same official server.
 - **Plug in a controller**, USB or Bluetooth. The phone remote is fine for menus, not for games.
 - **Games:** free homebrew (there's plenty, on [itch.io](https://itch.io/games/tag-nes) and elsewhere) or copies of
   cartridges you own. Downloading commercial games you don't own is illegal in most countries, and ROM sites are a

@@ -261,6 +261,17 @@ HDMI (Chromecast with Google TV, Google TV Streamer, onn 4K, NVIDIA Shield). Set
   `tools/webapp.py` is what both builds share. Preview: `python3 webos/build.py --preview` (or `tizen/build.py`), then
   open `out/webos/index.html` in a browser (a stand-in lists sample apps).
 
+## Retro games (optional)
+
+RetroArch's Play Store page stays blank on an uncertified box, so: the official `RetroArch_ra32.apk` (32-bit ARM
+boxes; `aarch64` for 64-bit) from buildbot.libretro.com/stable (check it's signed `O=Libretro`); a big APK, so
+`adb push` it and `pm install` on the box. Cores come from the URL RetroArch itself uses
+(`core_updater_buildbot_cores_url` in its retroarch.cfg: .../nightly/android/latest/armeabi-v7a/, `<core>_libretro_android.so.zip`);
+on a rooted box they go straight into `/data/user/0/com.retroarch.ra32/cores/`, owned by the app's uid (the RK322x box
+has SELinux disabled; elsewhere use its Online Updater). Light cores for these chips: fceumm, snes9x2010,
+genesis_plus_gx, gambatte, mgba, pcsx_rearmed. `rgui_browser_directory` (RetroArch closed: it rewrites the file on
+exit) points at /storage/emulated/0/ROMs. Games: homebrew or their own cartridges only.
+
 ## Checking a box for BADBOX
 
 Off-brand boxes ("MXQ Pro 5G", T95, X88…) are named in the BADBOX reports (FBI PSA I-060525-PSA, June 2025; Google's
