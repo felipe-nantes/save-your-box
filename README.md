@@ -1,5 +1,75 @@
 <div align="center">
 
+# Save Your Box
+
+**Give the cheap Android TV box in the drawer a second life.**
+
+An ad-free home screen, your phone as a remote, and the fixes an old "MXQ Pro"-style box needs.<br>
+Built on [Free My TV](https://github.com/simbasjungles/free-my-tv) (MIT), with Claude Code.
+
+[English](#what-save-your-box-adds) · [Português](#em-português) · [The Free My TV README](#free-my-tv)
+
+<img src=".github/save-your-box/home.png" width="430" alt="The home screen on an Android 7.1 box"> <img src=".github/save-your-box/settings.png" width="430" alt="Settings, with the phone remote's QR code">
+
+</div>
+
+## What Save Your Box adds
+
+Everything in Free My TV, plus:
+
+- **Android 7.1.** The no-name boxes sold as "Android 10/11" are often 7.1 inside (tested on an RK322x "MXQ Pro 4K 5G").
+- **Your phone as a remote.** Scan the QR code in the settings, no app to install: arrows, OK, typing for search,
+  the box's apps, a sleep timer, and photos for the screensaver. Keys go straight to the remote's input device,
+  0.1 to 0.3 s each on a slow box.
+- **It works the TV too.** A box like this often has no working HDMI-CEC. A TCL TV that isn't Android takes keys over
+  the network instead: the phone remote then does its volume, input and power, and "turn off" and the timer turn off
+  both.
+- **Time zone in the settings.** Old boxes still apply Brazil's (or another country's) abolished summer time; pick a
+  zone and it's set, with the offset each zone really has on that box.
+- **A photo of yours as the background,** switched on and off in the settings.
+- **Shortcuts** to the box's screen mirroring and USB drive player.
+- **Weather fix:** sunrise and sunset no longer an hour off on boxes with outdated time zone data.
+
+<img src=".github/save-your-box/drawer.png" width="430" alt="The drawer: mirroring, USB drive, weather and prices"> <img src=".github/save-your-box/time-zone.png" width="430" alt="The time zone list, with each zone's offset">
+
+### Tune the box (what made the difference on ours)
+
+[CLAUDE.md](CLAUDE.md) has the details; Claude Code can do all of it from your computer:
+
+- **Compile the apps.** These boxes never run Android's compile job: every app starts interpreted. Compiling
+  YouTube took it from 32-40 s to 3.8 s to open.
+- **HDMI at 60 Hz.** Ours came out of the box at 4096×2160 and 24 Hz: the menus moved at 24 frames a second.
+- **The clock.** No battery: it starts in 1970 until it finds a time server, and it had none set.
+- **Turn off the junk.** The Adups updater (caught sending users' data in 2016), factory tests, the Assistant.
+
+### Be careful with these boxes
+
+Boxes sold as "MXQ Pro 5G" are among the models found with backdoors from the factory
+([HUMAN Security's BadBox report](https://www.tomsguide.com/news/thousands-of-android-tv-boxes-infected-with-dangerous-malware-linked-to-fraud),
+[FBI warning](https://www.eff.org/deeplinks/2025/06/fbi-warning-iot-devices-how-tell-if-you-are-impacted)).
+Free My TV needs the box's network ADB, and on these boxes that ADB has no password and root: put the box on your
+router's guest network, away from your computer and phones. Install apps only from their makers.
+
+## Em português
+
+**Dê uma segunda vida ao TV box barato que está na gaveta.** Tudo do Free My TV, mais:
+
+- **Android 7.1:** os boxes vendidos como "Android 10/11" muitas vezes são 7.1 por dentro.
+- **Controle pelo celular:** escaneie o QR code nos ajustes, sem instalar nada. Setas, OK, teclado para busca, apps,
+  timer para dormir e fotos para o protetor de tela.
+- **Controla a TV também:** sem HDMI-CEC, uma TV TCL (não Android) recebe volume, entrada e liga/desliga pela rede.
+- **Fuso horário nos ajustes:** resolve o horário de verão antigo que esses boxes ainda aplicam.
+- **Sua foto de fundo,** atalhos para espelhar o celular e para o pendrive, e o clima com o nascer e o pôr do sol certos.
+- **Box mais rápido:** compilar os apps, HDMI a 60 Hz, hora automática e desligar os apps inúteis (detalhes no
+  [CLAUDE.md](CLAUDE.md)).
+- **Cuidado:** esses boxes aparecem em relatórios de malware de fábrica. Coloque-o na rede de convidados do roteador.
+
+Para instalar, abra a pasta no Claude Code e diga: *"Instale no meu TV box no IP 192.168.0.50. Moro em São Paulo."*
+
+---
+
+<div align="center">
+
 <img src="docs/assets/icon-512.png" width="96" alt="">
 
 # Free My TV
