@@ -261,6 +261,22 @@ HDMI (Chromecast with Google TV, Google TV Streamer, onn 4K, NVIDIA Shield). Set
   `tools/webapp.py` is what both builds share. Preview: `python3 webos/build.py --preview` (or `tizen/build.py`), then
   open `out/webos/index.html` in a browser (a stand-in lists sample apps).
 
+## Checking a box for BADBOX
+
+Off-brand boxes ("MXQ Pro 5G", T95, X88…) are named in the BADBOX reports (FBI PSA I-060525-PSA, June 2025; Google's
+suit, July 2025). Read-only checks, then tell them plainly what you found and what it can't prove (malware in the
+firmware can hide; if in doubt, the box goes):
+
+- Packages and files: `pm list packages` for `com.hs.app`; root `find` (push a script: its `su` mangles quotes) for
+  `libanl.so`, `p.jar`, `q.jar` outside the system's own folders.
+- Servers: what `/proc/net/tcp` shows connected (map uids with `dumpsys package`), and whether anything resolves
+  `catmore88.com` or `ipmoyu.com`.
+- The FBI's warning signs: not Play Protect certified (the Play Store logs "GMS device compliance query failed"),
+  unofficial app stores (FlyMarket, "GetApps"), "free content" apps, a request to turn off Play Protect
+  (`settings get global package_verifier_enable`).
+- Pre-installed updaters with install rights (Adups `com.adups.fota`, Ragentek): in `HomeMode.DEBLOAT`.
+- Then: the router's guest network, apps only from their makers, and the network ADB off when it isn't needed.
+
 ## Always
 
 - Never turn off an app that saved a Wi-Fi network: Android deletes its networks and Original can't bring them

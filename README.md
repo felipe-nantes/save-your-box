@@ -2,69 +2,132 @@
 
 # Save Your Box
 
-**Give the cheap Android TV box in the drawer a second life.**
+### That cheap Android TV box under your TV may be working for someone else. Take it back.
 
-An ad-free home screen, your phone as a remote, and the fixes an old "MXQ Pro"-style box needs.<br>
-Built on [Free My TV](https://github.com/simbasjungles/free-my-tv) (MIT), with Claude Code.
+**Safer. Faster. Clean. Fun.** An ad-free home screen, your phone as a remote, and the fixes an old "MXQ Pro"-style
+box badly needs. Built on [Free My TV](https://github.com/simbasjungles/free-my-tv) (MIT), with Claude Code.
 
-[English](#what-save-your-box-adds) · [Português](#em-português) · [The Free My TV README](#free-my-tv)
+[Why](#the-box-in-your-living-room) · [What it does](#what-save-your-box-does) · [Retro games](#optional-retro-games) · [Português](#em-português) · [Install](#install)
 
 <img src=".github/save-your-box/home.png" width="430" alt="The home screen on an Android 7.1 box"> <img src=".github/save-your-box/settings.png" width="430" alt="Settings, with the phone remote's QR code">
 
 </div>
 
-## What Save Your Box adds
+## The box in your living room
 
-Everything in Free My TV, plus:
+**June 2025. The FBI issues a public warning** ([IC3 alert I-060525-PSA](https://www.ic3.gov/PSA/2025/PSA250605)):
+a China-based botnet called **BADBOX 2.0** has taken over **more than a million** off-brand Android devices, mostly
+cheap TV streaming boxes. Some come infected **from the factory**; others get the malware from the "free content"
+apps and unofficial stores they push you to. Once inside, criminals sell **your home internet connection** to
+others as a proxy, click ads behind your back, and use the box as a door into your network.
 
-- **Android 7.1.** The no-name boxes sold as "Android 10/11" are often 7.1 inside (tested on an RK322x "MXQ Pro 4K 5G").
-- **Your phone as a remote.** Scan the QR code in the settings, no app to install: arrows, OK, typing for search,
-  the box's apps, a sleep timer, and photos for the screensaver. Keys go straight to the remote's input device,
-  0.1 to 0.3 s each on a slow box.
-- **It works the TV too.** A box like this often has no working HDMI-CEC. A TCL TV that isn't Android takes keys over
-  the network instead: the phone remote then does its volume, input and power, and "turn off" and the timer turn off
-  both.
-- **Time zone in the settings.** Old boxes still apply Brazil's (or another country's) abolished summer time; pick a
-  zone and it's set, with the offset each zone really has on that box.
-- **A photo of yours as the background,** switched on and off in the settings.
-- **Shortcuts** to the box's screen mirroring and USB drive player.
-- **Weather fix:** sunrise and sunset no longer an hour off on boxes with outdated time zone data.
+**July 2025. Google sues 25 people in China** over the same botnet and puts it at **more than 10 million devices**,
+"the largest known botnet of internet-connected TV devices"
+([The Register](https://www.theregister.com/2025/07/17/google_sues_25_unnamed_chinese/),
+[The Hacker News](https://thehackernews.com/2025/07/google-sues-25-chinese-entities-over.html)).
+
+**And it isn't new.** In 2016, researchers found that update software from **Adups, a Shanghai company**, was sending
+phone owners' **text messages and call logs to its servers in China every 72 hours**, disguised as update traffic,
+on more than 100,000 phones sold in the US
+([TechCrunch](https://techcrunch.com/2016/11/15/budget-us-android-smartphones-found-secretly-sending-personal-data-to-china/),
+[Dark Reading](https://www.darkreading.com/mobile-security/firmware-secretly-sent-text-call-data-on-android-users-to-china)).
+
+**Our box** was a no-name "MXQ Pro 5G": a name that appears in the security reports on factory backdoors
+([Tom's Guide](https://www.tomsguide.com/news/thousands-of-android-tv-boxes-infected-with-dangerous-malware-linked-to-fraud)).
+Here's what we found inside:
+
+| Found on our box | Why it matters |
+|---|---|
+| The **Adups updater**, switched on | The same company as in 2016, as a system app that can install software |
+| **Not Play Protect certified** | One of the FBI's own warning signs; the Play Store won't even open app pages |
+| **Root from the factory**, and an ADB that asks no password | Turn on network ADB and anyone on your Wi-Fi gets full control |
+| The system says **4 GB** of memory | About **2 GB** real: the rest is a made-up number |
+| **24 Hz** video, **no app ever compiled**, a clock back in **1970** after a reboot | YouTube took **40 seconds** to open |
+
+We didn't find the known BADBOX 2.0 files on ours. No scan can promise a box is clean, though: malware in the
+firmware can hide. If yours shows ads out of nowhere, gets hot when idle, or asks you to turn off Play Protect,
+**unplug it and replace it.** For the rest, here's how to take yours back.
+
+## What Save Your Box does
+
+### 🛡️ Safer
+
+- Turns off the **Adups updater**, the factory test apps and the Assistant, without uninstalling anything: one button
+  (*Original*) brings it all back.
+- Keeps the box's real pieces safe (Chrome is its web engine on Android 7; the front panel clock; mirroring).
+- The phone remote only answers your home network, and only with the key in the QR code on your TV.
+- [CLAUDE.md](CLAUDE.md) walks Claude Code through checking your box for the known BADBOX 2.0 files, servers and
+  warning signs. And put the box on your router's **guest network**, away from your computer and phones.
+
+### ⚡ Faster
+
+- **Compiles the apps** these boxes never compile: YouTube went from **32-40 s to 3.8 s** to open, TVCine from up to
+  35 s to 2.5 s.
+- **HDMI at 60 Hz** instead of 24, free memory up by about **190 MB**, and the clock set by itself (it had no time
+  server).
+
+### ✨ Clean
+
+- **No ads**, no sponsored rows, no promo apps: your apps on a glass shelf, the weather, the clock.
+- **Time zone in the settings**, with the offset each zone really has on that box (old boxes still apply abolished
+  summer times), and the weather's sunrise and sunset right again.
+- **Your own photo as the background**, switched on and off in the settings.
+
+### 🎮 Fun
+
+- **Your phone is the remote.** Scan the QR code in the settings, nothing to install: arrows, OK, **typing for
+  search**, the box's apps, a **sleep timer**, and **your photos on the screensaver**. Keys take 0.1 to 0.3 s.
+- **It works the TV too.** Boxes like this rarely have working HDMI-CEC. A TCL TV that isn't Android takes keys over
+  the network instead: the phone does its **volume, input and power**, and "turn off" and the timer turn off both.
+- **Shortcuts** to mirror your phone on the TV and to play what's on a USB drive.
+- **Retro games,** optional, below.
 
 <img src=".github/save-your-box/drawer.png" width="430" alt="The drawer: mirroring, USB drive, weather and prices"> <img src=".github/save-your-box/time-zone.png" width="430" alt="The time zone list, with each zone's offset">
 
-### Tune the box (what made the difference on ours)
+## Optional: retro games
 
-[CLAUDE.md](CLAUDE.md) has the details; Claude Code can do all of it from your computer:
+[RetroArch](https://www.retroarch.com) turns the box into a retro console: NES, Super Nintendo, Mega Drive, Game Boy
+Advance and PlayStation run well even on these slow chips.
 
-- **Compile the apps.** These boxes never run Android's compile job: every app starts interpreted. Compiling
-  YouTube took it from 32-40 s to 3.8 s to open.
-- **HDMI at 60 Hz.** Ours came out of the box at 4096×2160 and 24 Hz: the menus moved at 24 frames a second.
-- **The clock.** No battery: it starts in 1970 until it finds a time server, and it had none set.
-- **Turn off the junk.** The Adups updater (caught sending users' data in 2016), factory tests, the Assistant.
-
-### Be careful with these boxes
-
-Boxes sold as "MXQ Pro 5G" are among the models found with backdoors from the factory
-([HUMAN Security's BadBox report](https://www.tomsguide.com/news/thousands-of-android-tv-boxes-infected-with-dangerous-malware-linked-to-fraud),
-[FBI warning](https://www.eff.org/deeplinks/2025/06/fbi-warning-iot-devices-how-tell-if-you-are-impacted)).
-Free My TV needs the box's network ADB, and on these boxes that ADB has no password and root: put the box on your
-router's guest network, away from your computer and phones. Install apps only from their makers.
+- **Get it from its makers.** The Play Store won't open its page on an uncertified box, so use the official 32-bit
+  build, `RetroArch_ra32.apk`, from [buildbot.libretro.com/stable](https://buildbot.libretro.com/stable/) (signed by
+  Libretro), and the cores from RetroArch's own *Online Updater*. Never from an "APK site".
+- **Plug in a controller**, USB or Bluetooth. The phone remote is fine for menus, not for games.
+- **Games:** free homebrew (there's plenty, on [itch.io](https://itch.io/games/tag-nes) and elsewhere) or copies of
+  cartridges you own. Downloading commercial games you don't own is illegal in most countries, and ROM sites are a
+  favorite place to hide malware.
 
 ## Em português
 
-**Dê uma segunda vida ao TV box barato que está na gaveta.** Tudo do Free My TV, mais:
+### Aquele TV box barato embaixo da sua TV pode estar trabalhando para outra pessoa. Retome o controle.
 
-- **Android 7.1:** os boxes vendidos como "Android 10/11" muitas vezes são 7.1 por dentro.
-- **Controle pelo celular:** escaneie o QR code nos ajustes, sem instalar nada. Setas, OK, teclado para busca, apps,
-  timer para dormir e fotos para o protetor de tela.
-- **Controla a TV também:** sem HDMI-CEC, uma TV TCL (não Android) recebe volume, entrada e liga/desliga pela rede.
-- **Fuso horário nos ajustes:** resolve o horário de verão antigo que esses boxes ainda aplicam.
-- **Sua foto de fundo,** atalhos para espelhar o celular e para o pendrive, e o clima com o nascer e o pôr do sol certos.
-- **Box mais rápido:** compilar os apps, HDMI a 60 Hz, hora automática e desligar os apps inúteis (detalhes no
-  [CLAUDE.md](CLAUDE.md)).
-- **Cuidado:** esses boxes aparecem em relatórios de malware de fábrica. Coloque-o na rede de convidados do roteador.
+- **Junho de 2025:** o **FBI** emitiu um alerta público sobre a **BADBOX 2.0**, uma botnet que ele descreve como
+  "baseada na China", com **mais de 1 milhão** de aparelhos Android genéricos, a maioria TV boxes baratos. Alguns já
+  vêm infectados **de fábrica**. Os criminosos revendem a **sua internet** como proxy, clicam em anúncios escondidos e
+  usam o box como porta para a sua rede ([alerta do FBI](https://www.ic3.gov/PSA/2025/PSA250605)).
+- **Julho de 2025:** o **Google processou 25 pessoas na China** pela mesma botnet, com **mais de 10 milhões** de
+  aparelhos ([The Register](https://www.theregister.com/2025/07/17/google_sues_25_unnamed_chinese/)).
+- **2016:** o atualizador da **Adups**, uma empresa de Xangai, mandava **SMS e histórico de chamadas** dos usuários
+  para servidores na China **a cada 72 horas** ([TechCrunch](https://techcrunch.com/2016/11/15/budget-us-android-smartphones-found-secretly-sending-personal-data-to-china/)).
+  **O nosso box veio com esse atualizador ligado.**
+
+O Save Your Box deixa o seu box:
+
+- 🛡️ **Mais seguro:** desliga o Adups, os apps de teste de fábrica e o Assistente (um botão traz tudo de volta), e o
+  controle pelo celular só responde na sua rede, com a chave do QR code.
+- ⚡ **Mais rápido:** o YouTube passou de **40 s para 3,8 s** para abrir. HDMI a 60 Hz, mais memória livre e hora certa.
+- ✨ **Limpo:** sem anúncios, com fuso horário nos ajustes e a sua foto de fundo.
+- 🎮 **Divertido:** o **celular vira controle** (setas, teclado, apps, timer, fotos no protetor de tela), controla a
+  **TV TCL pela rede** (volume, entrada, liga/desliga) e, se quiser, **jogos retrô** com o RetroArch oficial.
+
+Não achamos os arquivos conhecidos da BADBOX 2.0 no nosso, mas nenhuma varredura garante 100%. Se o seu mostra
+anúncios do nada ou pede para desligar o Play Protect, **desligue da tomada e troque**. E deixe o box na **rede de
+convidados** do roteador.
 
 Para instalar, abra a pasta no Claude Code e diga: *"Instale no meu TV box no IP 192.168.0.50. Moro em São Paulo."*
+
+<sub>Save Your Box isn't affiliated with the FBI, Google, TCL, Libretro or Free My TV's authors. The facts above come
+from the public sources linked.</sub>
 
 ---
 
